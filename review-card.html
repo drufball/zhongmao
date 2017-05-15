@@ -1,0 +1,100 @@
+<template id="review-card">
+  <style>
+    .hidden {
+      display: none;
+    }
+  </style>
+  <p id="front">Loading card front data...</p>
+  <button id="reveal-info">Show answer</button>
+  <div id="card-back" class="hidden">
+    <p id="hint">Loading card hint data...</p>
+    <p id="back">Loading card back data...</p>
+    <button class="difficulty-btn" value="0">Wrong</button>
+    <button class="difficulty-btn" value="3">Hard</button>
+    <button class="difficulty-btn" value="4">Medium</button>
+    <button class="difficulty-btn" value="5">Easy</button>
+  </div>
+</template>
+
+<script>
+  const review_card_doc = document.currentScript.ownerDocument;
+  const review_card_markup = review_card_doc.querySelector('#review-card');
+
+  class ReviewCard extends HTMLElement {
+    constructor(data) {
+      super();
+
+      // Import template markup
+      let shadowRoot = this.attachShadow({mode:'open'});
+      shadowRoot.appendChild(review_card_markup.content.cloneNode(true));
+
+      // Initialize data and UI if provided
+      if(data) {
+        this.front = data.front;
+        this.hint = data.hint;
+        this.back = data.back;
+        this.ef = data.ef;
+        this.interval = data.interval;
+        this.shadowRoot.querySelector('#front').innerHTML = this.front;
+        this.shadowRoot.querySelector('#hint').innerHTML = this.hint;
+        this.shadowRoot.querySelector('#back').innerHTML = this.back;
+      }
+    }
+
+    connectedCallback() {
+      const revealBtn = this.shadowRoot.querySelector('#reveal-info');
+      revealBtn.addEventListener('click', this.revealInfo.bind(this));
+
+      const diffBtns = this.shadowRoot.querySelectorAll('.difficulty-btn');
+      for(const difficulty of diffBtns) {
+        difficulty.addEventListener('click', () => {
+          this.cardAnswered(difficulty.value);
+        });
+      }
+    }
+
+    revealInfo() {
+      this.shadowRoot.querySelector('#card-back').classList.toggle('hidden');
+    }
+
+    cardAnswered(difficulty) {
+      const answerEvent = new CustomEvent('answered', {
+        'detail': difficulty
+      });
+      this.dispatchEvent(answerEvent);
+    }
+
+    // Getters and setters
+    get front() {
+      return this.getAttribute('front');
+    }
+    set front(txt) {
+      this.setAttribute('front', txt);
+    }
+    get hint() {
+      return this.getAttribute('hint');
+    }
+    set hint(txt) {
+      this.setAttribute('hint', txt);
+    }
+    get back() {
+      return this.getAttribute('back');
+    }
+    set back(txt) {
+      this.setAttribute('back', txt);
+    }
+    get ef() {
+      return this.getAttribute('ef');
+    }
+    set ef(txt) {
+      this.setAttribute('ef', txt);
+    }
+    get interval() {
+      return this.getAttribute('interval');
+    }
+    set interval(txt) {
+      this.setAttribute('interval', txt);
+    }
+  }
+  window.customElements.define('review-card', ReviewCard);
+</script>

@@ -1,0 +1,52 @@
+<link rel="import" id="review-card" href="review-card.html">
+
+<template id="review-page">
+  <review-card id="current-review"></review-card>
+</template>
+
+<script>
+  const review_page_doc = document.currentScript.ownerDocument;
+  const review_page_markup = review_page_doc.querySelector('#review-page');
+
+  class ReviewPage extends HTMLElement {
+    constructor(data) {
+      super();
+
+      // Import template markup
+      let shadowRoot = this.attachShadow({mode:'open'});
+      shadowRoot.appendChild(review_page_markup.content.cloneNode(true));
+
+      // Initialize data if provided
+      // TODO: handle case with data.len = 1
+      if(data) {
+        this.currentReview = new ReviewCard(data[0]);
+        this.reviews = data;
+      }
+    }
+
+    connectedCallback() {
+      // Add event listeners
+      this.currentReview.addEventListener('answered', this.nextReview.bind(this));
+    }
+
+    async nextReview(answerEvent) {
+      const reviewPageWorklet = await worklet.connect('review-page');
+      reviewPageWorklet.updateCard(this.reviews[0], answerEvent.detail);
+
+      this.currentReview = new ReviewCard(this.reviews[1]);
+      this.currentReview.addEventListener('answered', this.nextReview.bind(this));
+      //this.reviews = this.reviews.slice(1);
+    }
+
+    // Getters and setters
+    get currentReview() {
+      return this.shadowRoot.querySelector('#current-review');
+    }
+    set currentReview(newReview) {
+      const oldReview = this.shadowRoot.querySelector('#current-review');
+      this.shadowRoot.replaceChild(newReview, oldReview);
+      newReview.setAttribute('id', 'current-review');
+    }
+  }
+  window.customElements.define('review-page', ReviewPage);
+</script>
